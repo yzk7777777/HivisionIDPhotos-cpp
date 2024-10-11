@@ -1,9 +1,51 @@
 #include "main.h"
 
 
+bool compareContours(const std::vector<cv::Point>& contour1, const std::vector<cv::Point>& contour2) {
+    double area1 = cv::contourArea(contour1);
+    double area2 = cv::contourArea(contour2);
+    return area1 > area2; // 返回 true 如果第一个轮廓的面积大于第二个
+}
 
 
 
+cv::Mat add_padding(const cv::Mat& src, int pad_size, int borderType, const cv::Scalar& value) {
+    CV_Assert(src.type() != CV_8S); // 确保图像类型不是CV_8S，因为copyMakeBorder不支援
+
+    // 添加填充
+    cv::Mat dst;
+    cv::copyMakeBorder(src, dst, pad_size, pad_size, pad_size, pad_size, borderType, value);
+
+    return dst;
+}
+
+cv::Mat image3bgr(const cv::Mat& input_image) {
+    cv::Mat result_image;
+
+    if (input_image.channels() == 1) { // 灰度图（单通道）
+        // 复制单通道图像到三个通道
+        cv::cvtColor(input_image, result_image, cv::COLOR_GRAY2BGR);
+    }
+    else if (input_image.channels() == 2) { // 可能是单通道图像加上一个alpha通道
+        // 复制两通道图像到三个通道
+        cv::cvtColor(input_image, result_image, cv::COLOR_GRAY2BGR);
+    }
+    else if (input_image.channels() == 4) { // 四通道图像（可能是RGBA）
+        // 从四通道图像中提取前三个通道（BGR）
+        result_image = input_image(cv::Rect(0, 0, input_image.cols, input_image.rows));
+        cv::cvtColor(result_image, result_image, cv::COLOR_RGBA2BGR);
+    }
+    else if (input_image.channels() == 3) { // 已经是BGR
+        result_image = input_image.clone();
+    }
+    else {
+        std::cerr << "Unsupported number of channels" << std::endl;
+    }
+
+    return result_image;
+}
+
+//设置图像大小
 bool resizeImageToKB(const cv::Mat& inputImage, const std::string& outputImagePath, int targetSizeKB) {
 
     // Ensure the image is in RGB format
@@ -42,6 +84,9 @@ bool resizeImageToKB(const cv::Mat& inputImage, const std::string& outputImagePa
 
     return true;
 }
+
+
+
 
 
 std::tuple<std::tuple<int, int, int>, int, int> judge_layout(
@@ -173,8 +218,13 @@ cv::Mat generate_layout_image(
     const int LAYOUT_WIDTH = 1746;
     const int LAYOUT_HEIGHT = 1180;
     cv::Mat resize_input_image;
+    int type = input_image.type();
+    int colos = input_image.channels();
+    printf("type=%d colos=%d\n", type, colos);
+   
     // 创建一个空白背景图像
     cv::Mat white_background(cv::Size(LAYOUT_WIDTH, LAYOUT_HEIGHT), CV_8UC3, cv::Scalar(255, 255, 255));
+    printf("h=%d,(input_image.rows=%d\n", height, input_image.rows);
     // 检查输入图像的高度是否与预期的高度不同，如果是，则调整大小
     if (input_image.rows != height) {
   
@@ -197,18 +247,17 @@ cv::Mat generate_layout_image(
 
         // 将输入图像复制到背景图像的指定位置
         cv::Rect roi(locate_x, locate_y, width, height);
-        try {
+        printf("x=%d,y=%d,wi=%d,he=%d\n", roi.x, roi.y, roi.width, roi.height);
             resize_input_image.copyTo(white_background(roi));
-        }
-        catch (const cv::Exception& ex) {
-            std::cerr << "OpenCV error: " << ex.what() << std::endl;
-        }
+
+
+ 
     }
 
     return white_background;
 }
 
-
+//添加背景
 cv::Mat addBackground(const cv::Mat& input_image, const cv::Vec3b& bgr, const std::string& mode ) {
 	if (input_image.empty() || input_image.channels() != 4) {
 		std::cerr << "Input image is empty or does not have an alpha channel." << std::endl;

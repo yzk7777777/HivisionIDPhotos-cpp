@@ -1,5 +1,5 @@
 #pragma once
-#include "main.h"
+
 
 
 
@@ -18,20 +18,17 @@ typedef struct FaceInfo {
 }FaceInfo;
 
 
-typedef struct Params {
-	int out_image_width = 295;
-	int out_image_height = 413;
+typedef struct matting_params {
+
 	bool change_bg_only = false;
-	float head_measure_ratio = 0.2;
-	float head_height_ratio = 0.55;
+	/*float head_measure_ratio = 0.35;*/
+	float head_height_ratio = 0.45;
 	float head_top_range[2] = { 0.12f, 0.1f };
-	int rgb_r = 255;
-	int rgb_b = 0;
-	int rgb_g = 0;
 	FaceInfo face_info;
 
-}Params;
+}matting_params;
 
+#include "main.h"
 class LFFD {
 public:
 	LFFD(const std::string& model_path, int scale_num = 5, int num_thread_ = 4);

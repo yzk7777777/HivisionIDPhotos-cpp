@@ -1,5 +1,5 @@
 
-#include "MNN_LFFD.h"
+#include "face_detect.h"
 
 const float mean_vals[3] = { 127.5f, 127.5f, 127.5f };
 const float norm_vals[3] = { 0.0078431373, 0.0078431373, 0.0078431373 };
